@@ -48,14 +48,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('auth:logout', onLogout);
   }, [refreshUser]);
 
-  // Background Heartbeat for Live Status — only when tab is visible
+  // Background Heartbeat for Live Status — keeps user Active while logged in
   useEffect(() => {
     if (!user) return;
 
     let lastSent = 0;
     const sendHeartbeat = async () => {
       const now = Date.now();
-      if (now - lastSent < 30_000) return;
+      if (now - lastSent < 10_000) return;
       if (typeof document !== 'undefined' && document.hidden) return;
       lastSent = now;
       try {
@@ -72,24 +72,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisible);
 
+    const onActivity = () => { sendHeartbeat(); };
+    const activityEvents: (keyof DocumentEventMap)[] = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    activityEvents.forEach((evt) => document.addEventListener(evt, onActivity));
+
+    const interval = setInterval(() => {
+      if (!document.hidden) sendHeartbeat();
+    }, 15000);
+
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisible);
+      activityEvents.forEach((evt) => document.removeEventListener(evt, onActivity));
+      clearInterval(interval);
     };
   }, [user?.id]);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await api.post<{ token: string; user: User }>('/auth/login', { email, password });
-    setToken(data.token);
-    setUserState(data.user);
-  }, []);
-
-  const logout = useCallback(() => {
-    // Notify server to set status to inactive immediately
-    api.post('/auth/logout', {}).catch(() => {});
-    setToken(null);
-    setUserState(null);
-  }, []);
 
   const updateLiveStatus = useCallback(async (status: LiveStatusType, message?: string) => {
     setUserState((prev) => prev ? { ...prev, live_status: status, status_message: message ?? prev.status_message } : null);
@@ -106,6 +103,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw err;
     }
   }, [refreshUser]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const data = await api.post<{ token: string; user: User }>('/auth/login', { email, password });
+    setToken(data.token);
+    setUserState(data.user);
+    try {
+      await updateLiveStatus('active');
+    } catch {
+      await refreshUser();
+    }
+  }, [updateLiveStatus, refreshUser]);
+
+  const logout = useCallback(() => {
+    // Notify server to set status to inactive immediately
+    api.post('/auth/logout', {}).catch(() => {});
+    setToken(null);
+    setUserState(null);
+  }, []);
 
   const hasPermission = useCallback((permission: string | string[]): boolean => {
     if (!user) return false;

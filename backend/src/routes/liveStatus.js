@@ -6,27 +6,39 @@ import { initials } from '../utils.js';
 const router = Router();
 router.use(requireAuth);
 
-// Auto-expire stale statuses (if no heartbeat/active ping for > 30s)
+// Auto-expire stale statuses:
+// - Active with no activity for 10 minutes -> Away
+// - Away with no activity for 30 minutes -> Inactive
 function autoExpireStaleSessions() {
   try {
     db.prepare(`
       UPDATE users
-      SET live_status = 'inactive',
-          status_updated_at = datetime('now','+6 hours')
+      SET live_status = CASE
+        WHEN live_status = 'active'
+          AND (
+            last_active_at IS NULL
+            OR (strftime('%s', datetime('now', '+6 hours')) - strftime('%s', last_active_at)) > 300
+          )
+          THEN 'away'
+        WHEN live_status IN ('active', 'away')
+          AND (
+            last_active_at IS NULL
+            OR (strftime('%s', datetime('now', '+6 hours')) - strftime('%s', last_active_at)) > 1800
+          )
+          THEN 'inactive'
+        ELSE live_status
+      END,
+      status_updated_at = datetime('now','+6 hours')
       WHERE is_active = 1
         AND live_status IN ('active', 'away')
-        AND (
-          last_active_at IS NULL
-          OR (strftime('%s', datetime('now', '+6 hours')) - strftime('%s', last_active_at)) > 30
-        )
     `).run();
   } catch (err) {
     console.error('Error expiring stale live statuses:', err);
   }
 }
 
-// Run periodic cleanup every 5s
-setInterval(autoExpireStaleSessions, 5000).unref();
+// Run periodic cleanup every 30s
+setInterval(autoExpireStaleSessions, 30000).unref();
 
 function formatLiveUserRow(u) {
   return {
@@ -164,24 +176,19 @@ router.post('/status', (req, res) => {
 
 // POST /api/live-status/heartbeat - Periodic ping from frontend
 router.post('/heartbeat', (req, res) => {
-  const current = db.prepare('SELECT live_status FROM users WHERE id = ?').get(req.user.id);
-  let nextStatus = current?.live_status || 'active';
-
-  // If user was marked inactive due to timeout, restore to active upon new heartbeat
-  if (nextStatus === 'inactive') {
-    nextStatus = 'active';
-  }
-
   db.prepare(`
     UPDATE users
-    SET last_active_at = datetime('now','+6 hours'),
-        live_status = ?
+    SET live_status = 'active',
+        last_active_at = datetime('now','+6 hours'),
+        status_updated_at = datetime('now','+6 hours')
     WHERE id = ?
-  `).run(nextStatus, req.user.id);
+  `).run(req.user.id);
 
+  const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   res.json({
     ok: true,
-    live_status: nextStatus,
+    live_status: 'active',
+    last_active_at: updated.last_active_at,
     server_time: new Date().toISOString(),
   });
 });

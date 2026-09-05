@@ -71,10 +71,28 @@ router.post('/login', (req, res) => {
     WHERE id = ?
   `).run(user.id);
 
-  const token = signToken(user);
-  req.user = user;
+  const freshUser = db.prepare(`
+    SELECT u.*,
+      rg.name AS role_group_name,
+      rg.slug AS role_group_slug,
+      rg.color AS role_group_color,
+      rg.permissions AS role_group_permissions,
+      t.name AS team_name,
+      d.name AS department_name,
+      d.hotline AS department_hotline,
+      d.ext AS department_ext,
+      d.hotline_ext
+    FROM users u
+    LEFT JOIN role_groups rg ON rg.id = u.role_group_id
+    LEFT JOIN teams t ON t.id = u.team_id
+    LEFT JOIN departments d ON d.id = u.department_id
+    WHERE u.id = ?
+  `).get(user.id);
+
+  const token = signToken(freshUser || user);
+  req.user = freshUser || user;
   audit(req, 'auth.login', 'user', user.id, 'User signed in (Status: Active)');
-  res.json({ token, user: getPublicUser(user) });
+  res.json({ token, user: getPublicUser(freshUser || user) });
 });
 
 router.post('/logout', requireAuth, (req, res) => {
