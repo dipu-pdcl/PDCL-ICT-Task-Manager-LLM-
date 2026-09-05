@@ -46,7 +46,7 @@ export default function Login() {
               <ListTodo size={26} />
             </div>
             <div>
-              <div className="text-2xl font-bold gradient-text">TaskFlow</div>
+              <div className="text-2xl font-bold gradient-text">PDCL ICT</div>
               <div className="text-sm text-ink2">Enterprise Task Management</div>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function Login() {
         <div className="card p-8 shadow-2xl">
           <div className="lg:hidden flex items-center gap-2.5 mb-6">
             <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white"><ListTodo size={22} /></div>
-            <div className="text-xl font-bold gradient-text">TaskFlow</div>
+             <div className="text-xl font-bold gradient-text">PDCL ICT</div>
           </div>
           <h2 className="text-2xl font-bold mb-1">Sign in</h2>
           <p className="text-sm text-ink2 mb-6">Access your task management workspace</p>

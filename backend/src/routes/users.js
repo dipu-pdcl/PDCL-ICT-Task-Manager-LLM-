@@ -302,7 +302,7 @@ router.post('/', requirePermission('users.manage'), (req, res) => {
     db.prepare("UPDATE users SET employee_id = 'EMP' || printf('%03d', id) WHERE id = ?").run(id);
   }
   audit(req, 'user.create', 'user', id, `Created user ${trimmedName} (${targetGroup?.name || newRole}) with email ${trimmedEmail}`);
-  notify(id, 'system', 'Welcome to TaskFlow', `Your account was created by an administrator.`);
+  notify(id, 'system', 'Welcome to PDCL ICT', `Your account was created by an administrator.`);
   
   const created = db.prepare(`
     SELECT u.*,

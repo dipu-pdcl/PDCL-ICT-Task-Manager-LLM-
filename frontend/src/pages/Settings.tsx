@@ -195,7 +195,7 @@ export default function SettingsPage() {
     setBackingUp(true);
     try {
       const stamp = bdDateKey();
-      await downloadExport('/settings/backup', `taskflow-backup-${stamp}.taskflow`);
+      await downloadExport('/settings/backup', `pdcl-ict-backup-${stamp}.pdcl-ict`);
       toast('Full system backup generated and downloaded');
       loadStats();
     } catch (e: any) {
@@ -216,8 +216,8 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      if (!parsed || parsed.format !== 'taskflow-backup') {
-        setRestoreError('Invalid file format. Please upload a valid TaskFlow backup file (.taskflow).');
+      if (!parsed || parsed.format !== 'pdcl-ict-backup') {
+        setRestoreError('Invalid file format. Please upload a valid PDCL ICT backup file (.pdcl-ict).');
         setRestoreFile(null);
         if (restoreInputRef.current) restoreInputRef.current.value = '';
         return;
@@ -229,7 +229,7 @@ export default function SettingsPage() {
         return;
       }
     } catch {
-      setRestoreError('The selected file could not be parsed as JSON. Please ensure it is an intact .taskflow backup.');
+      setRestoreError('The selected file could not be parsed as JSON. Please ensure it is an intact .pdcl-ict backup.');
       setRestoreFile(null);
       if (restoreInputRef.current) restoreInputRef.current.value = '';
       return;
@@ -369,7 +369,7 @@ export default function SettingsPage() {
               <span className="badge badge-brand text-xs font-semibold">Production Ready</span>
             </div>
             <p className="text-xs text-ink2 mt-1 max-w-2xl">
-              Take an exact snapshot of the entire TaskFlow system or restore a previously downloaded backup.
+               Take an exact snapshot of the entire PDCL ICT system or restore a previously downloaded backup.
               A Full Backup captures <strong>all users and credentials</strong>, <strong>task and priority workflows</strong>,{' '}
               <strong>leave management data and quotas</strong>, <strong>system configurations and KPI rules</strong>, and{' '}
               <strong>all file attachments</strong>.
@@ -445,7 +445,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-ink">Download Full Backup</h3>
-                  <p className="text-[11px] text-ink3">Single-file .taskflow system snapshot</p>
+                   <p className="text-[11px] text-ink3">Single-file .pdcl-ict system snapshot</p>
                 </div>
               </div>
               <p className="text-xs text-ink2 mt-2 leading-relaxed">
@@ -477,7 +477,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <p className="text-xs text-ink2 mt-2 leading-relaxed">
-                Upload a verified <code className="text-brand font-mono">.taskflow</code> backup file to restore. Existing
+                 Upload a verified <code className="text-brand font-mono">.pdcl-ict</code> backup file to restore. Existing
                 system data will be <strong>completely replaced</strong> to avoid duplicates, with an automated safety backup
                 saved first.
               </p>
@@ -486,14 +486,14 @@ export default function SettingsPage() {
               <input
                 ref={restoreInputRef}
                 type="file"
-                accept=".taskflow,application/json,.json"
+                 accept=".pdcl-ict,application/json,.json"
                 className="hidden"
                 onChange={(e) => onPickRestore(e.target.files?.[0] ?? null)}
               />
               <button
                 className="btn btn-ghost btn-sm text-xs truncate max-w-[170px]"
                 onClick={() => restoreInputRef.current?.click()}
-                title="Select .taskflow backup file"
+                 title="Select .pdcl-ict backup file"
               >
                 {restoreFile ? (
                   <>
@@ -501,7 +501,7 @@ export default function SettingsPage() {
                   </>
                 ) : (
                   <>
-                    <FolderSync size={13} className="shrink-0" /> Choose .taskflow file
+                    <FolderSync size={13} className="shrink-0" /> Choose .pdcl-ict file
                   </>
                 )}
               </button>

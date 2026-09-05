@@ -284,7 +284,7 @@ export function Layout() {
           <ListTodo size={20} />
         </div>
         <div>
-          <div className="font-bold text-lg leading-none gradient-text">TaskFlow</div>
+          <div className="font-bold text-lg leading-none gradient-text">PDCL ICT</div>
           <div className="text-[10px] text-ink3 mt-0.5">Enterprise Task Manager</div>
         </div>
       </div>

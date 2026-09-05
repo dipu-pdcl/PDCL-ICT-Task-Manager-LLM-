@@ -12,7 +12,7 @@ import { isoNow } from '../utils.js';
 const router = Router();
 router.use(requireAuth, requireAdmin);
 
-export const BACKUP_FORMAT = 'taskflow-backup';
+export const BACKUP_FORMAT = 'pdcl-ict-backup';
 export const BACKUP_VERSION = 1;
 
 const upload = multer({
@@ -148,7 +148,7 @@ export function buildBackupManifest() {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
     backupType: 'full',
-    app: 'taskflow',
+    app: 'pdcl-ict',
     createdAt: new Date().toISOString(),
     systemTimezone: 'Asia/Dhaka (+06:00)',
     tables: Object.keys(tableData),
@@ -380,7 +380,7 @@ router.get('/backup', (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="taskflow-backup-${isoNow().slice(0, 19).replace(/[:T]/g, '-')}.taskflow"`
+      `attachment; filename="pdcl-ict-backup-${isoNow().slice(0, 19).replace(/[:T]/g, '-')}.pdcl-ict"`
     );
     res.send(JSON.stringify(manifest, null, 2));
   } catch (e) {
@@ -475,7 +475,7 @@ router.post('/backup/restore', upload.single('file'), async (req, res) => {
     let safetyName = '';
     try {
       const preRestore = buildBackupManifest();
-      safetyName = `safety-pre-restore-${isoNow().slice(0, 19).replace(/[:T]/g, '-')}.taskflow`;
+      safetyName = `safety-pre-restore-${isoNow().slice(0, 19).replace(/[:T]/g, '-')}.pdcl-ict`;
       fs.writeFileSync(path.join(SAFETY_DIR, safetyName), JSON.stringify(preRestore));
     } catch (safetyErr) {
       console.warn('Could not write pre-restore safety snapshot:', safetyErr);

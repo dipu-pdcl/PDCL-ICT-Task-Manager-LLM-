@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'taskflow_token';
+const TOKEN_KEY = 'pdcl_ict_token';
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);

@@ -202,7 +202,7 @@ export async function seed() {
     }
 
     for (const u of allPeople.slice(0, 6)) {
-      db.prepare(`INSERT INTO notifications (user_id, type, title, message, created_at) VALUES (?, 'system', 'Welcome to TaskFlow', ?, ?)`)
+      db.prepare(`INSERT INTO notifications (user_id, type, title, message, created_at) VALUES (?, 'system', 'Welcome to PDCL ICT', ?, ?)`)
         .run(u.id, `Your account is ready. Complete your profile to get started.`, dateDaysAgo(20));
     }
 

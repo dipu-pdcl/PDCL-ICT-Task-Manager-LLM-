@@ -368,7 +368,7 @@ router.get('/export', (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     doc.pipe(res);
     const contentW = doc.page.width - 80;
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1e293b').text('TaskFlow Export', { align: 'center' });
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1e293b').text('PDCL ICT Export', { align: 'center' });
     doc.moveDown();
     doc.font('Helvetica').fontSize(11).fillColor('#475569').text(`Report: ${type} | Generated: ${toLocal(new Date().toISOString(), tzOffset)}`);
     doc.moveDown();

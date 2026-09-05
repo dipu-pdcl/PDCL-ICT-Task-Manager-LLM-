@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-const THEME_KEY = 'taskflow_theme';
+const THEME_KEY = 'pdcl_ict_theme';
 
 interface ThemeCtx {
   dark: boolean;
