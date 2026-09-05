@@ -1,0 +1,11 @@
+node_modules/
+dist/
+backend/data/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+*.db-wal
+*.db-shm
