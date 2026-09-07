@@ -3,8 +3,8 @@ import {
   CalendarDays, Plus, CheckCircle2, XCircle, Clock,
   Search, Check, X, User as UserIcon, Building2, Users as UsersIcon,
   ChevronLeft, ChevronRight, Download, Sparkles,
-  HeartPulse, Coffee, CalendarCheck2, ArrowRight, Info, AlertCircle, Calendar,
-  RotateCcw, SlidersHorizontal, UserCheck, Shield, Filter
+  HeartPulse, Coffee, CalendarCheck2, ArrowRight, Calendar,
+  RotateCcw
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type {

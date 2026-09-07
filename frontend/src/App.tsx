@@ -1,24 +1,35 @@
+import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Tasks from './pages/Tasks';
-import PriorityTasks from './pages/PriorityTasks';
-import LiveStatus from './pages/LiveStatus';
-import Leaves from './pages/Leaves';
 import TaskDetail from './pages/TaskDetail';
-import Users from './pages/Users';
-import Teams from './pages/Teams';
-import Departments from './pages/Departments';
-import Kpi from './pages/Kpi';
-import Reports from './pages/Reports';
-import SettingsPage from './pages/Settings';
-import Audit from './pages/Audit';
 import Profile from './pages/Profile';
-import Chat from './pages/Chat';
-import Projects from './pages/Projects';
-import ProjectDetail from './pages/ProjectDetail';
+import { Skeleton } from './components/ui';
+
+const Tasks = lazy(() => import('./pages/Tasks'));
+const PriorityTasks = lazy(() => import('./pages/PriorityTasks'));
+const LiveStatus = lazy(() => import('./pages/LiveStatus'));
+const Leaves = lazy(() => import('./pages/Leaves'));
+const Users = lazy(() => import('./pages/Users'));
+const Teams = lazy(() => import('./pages/Teams'));
+const Departments = lazy(() => import('./pages/Departments'));
+const Kpi = lazy(() => import('./pages/Kpi'));
+const Reports = lazy(() => import('./pages/Reports'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
+const Audit = lazy(() => import('./pages/Audit'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Projects = lazy(() => import('./pages/Projects'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+
+function PageSuspense() {
+  return (
+    <div className="h-full flex items-center justify-center">
+      <Skeleton className="w-24 h-24" />
+    </div>
+  );
+}
 
 function Protected({
   children,
@@ -54,23 +65,23 @@ export default function App() {
       <Route element={<Protected><Layout /></Protected>}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tasks" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><Tasks /></Protected>} />
-        <Route path="/tasks/new" element={<Protected permissions={['tasks.create']}><Tasks /></Protected>} />
+        <Route path="/tasks" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><Suspense fallback={<PageSuspense />}><Tasks /></Suspense></Protected>} />
+        <Route path="/tasks/new" element={<Protected permissions={['tasks.create']}><Suspense fallback={<PageSuspense />}><Tasks /></Suspense></Protected>} />
         <Route path="/tasks/:id" element={<Protected permissions={['tasks.view', 'tasks.edit']}><TaskDetail /></Protected>} />
-        <Route path="/priority-tasks" element={<Protected permissions={['priority_tasks.view', 'priority_tasks.manage']}><PriorityTasks /></Protected>} />
-        <Route path="/live-status" element={<Protected permissions={['live_status.view', 'live_status.manage']}><LiveStatus /></Protected>} />
-        <Route path="/leaves" element={<Protected permissions={['leaves.view', 'leaves.apply', 'leaves.approve', 'leaves.manage_quotas']}><Leaves /></Protected>} />
-        <Route path="/users" element={<Protected permissions={['users.view', 'users.manage']}><Users /></Protected>} />
-        <Route path="/teams" element={<Protected permissions={['teams.view', 'teams.manage']}><Teams /></Protected>} />
-        <Route path="/departments" element={<Protected permissions={['departments.view', 'departments.manage']}><Departments /></Protected>} />
-        <Route path="/kpi" element={<Protected permissions={['kpi.view', 'kpi.manage']}><Kpi /></Protected>} />
-        <Route path="/reports" element={<Protected permissions={['reports.view', 'reports.export']}><Reports /></Protected>} />
-        <Route path="/audit" element={<Protected permission="audit.view"><Audit /></Protected>} />
-        <Route path="/settings" element={<Protected permissions={['settings.view', 'settings.manage', 'roles.manage']}><SettingsPage /></Protected>} />
+        <Route path="/priority-tasks" element={<Protected permissions={['priority_tasks.view', 'priority_tasks.manage']}><Suspense fallback={<PageSuspense />}><PriorityTasks /></Suspense></Protected>} />
+        <Route path="/live-status" element={<Protected permissions={['live_status.view', 'live_status.manage']}><Suspense fallback={<PageSuspense />}><LiveStatus /></Suspense></Protected>} />
+        <Route path="/leaves" element={<Protected permissions={['leaves.view', 'leaves.apply', 'leaves.approve', 'leaves.manage_quotas']}><Suspense fallback={<PageSuspense />}><Leaves /></Suspense></Protected>} />
+        <Route path="/users" element={<Protected permissions={['users.view', 'users.manage']}><Suspense fallback={<PageSuspense />}><Users /></Suspense></Protected>} />
+        <Route path="/teams" element={<Protected permissions={['teams.view', 'teams.manage']}><Suspense fallback={<PageSuspense />}><Teams /></Suspense></Protected>} />
+        <Route path="/departments" element={<Protected permissions={['departments.view', 'departments.manage']}><Suspense fallback={<PageSuspense />}><Departments /></Suspense></Protected>} />
+        <Route path="/kpi" element={<Protected permissions={['kpi.view', 'kpi.manage']}><Suspense fallback={<PageSuspense />}><Kpi /></Suspense></Protected>} />
+        <Route path="/reports" element={<Protected permissions={['reports.view', 'reports.export']}><Suspense fallback={<PageSuspense />}><Reports /></Suspense></Protected>} />
+        <Route path="/audit" element={<Protected permission="audit.view"><Suspense fallback={<PageSuspense />}><Audit /></Suspense></Protected>} />
+        <Route path="/settings" element={<Protected permissions={['settings.view', 'settings.manage', 'roles.manage']}><Suspense fallback={<PageSuspense />}><SettingsPage /></Suspense></Protected>} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/projects" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><Projects /></Protected>} />
-        <Route path="/projects/:id" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><ProjectDetail /></Protected>} />
+        <Route path="/chat" element={<Suspense fallback={<PageSuspense />}><Chat /></Suspense>} />
+        <Route path="/projects" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><Suspense fallback={<PageSuspense />}><Projects /></Suspense></Protected>} />
+        <Route path="/projects/:id" element={<Protected permissions={['tasks.view', 'tasks.create', 'tasks.edit']}><Suspense fallback={<PageSuspense />}><ProjectDetail /></Suspense></Protected>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

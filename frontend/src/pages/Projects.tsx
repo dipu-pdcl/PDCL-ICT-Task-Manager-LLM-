@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Plus, FolderKanban, CalendarDays, Users, Search, Filter, Pencil, TrendingUp, AlertCircle, CheckCircle2, Pause, XCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';

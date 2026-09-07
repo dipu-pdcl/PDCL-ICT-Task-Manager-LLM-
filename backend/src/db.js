@@ -226,10 +226,32 @@ export function ensureSchema(handle = db) {
     if (!chatCols.includes('group_id')) {
       handle.exec("ALTER TABLE chat_messages ADD COLUMN group_id INTEGER REFERENCES chat_groups(id) ON DELETE CASCADE");
     }
-    // Index for faster conversation queries
+    // Indexes for faster conversation queries
     handle.exec("CREATE INDEX IF NOT EXISTS idx_chat_conversation ON chat_messages(conversation_id, created_at)");
     handle.exec("CREATE INDEX IF NOT EXISTS idx_chat_recipient ON chat_messages(recipient_id, created_at)");
     handle.exec("CREATE INDEX IF NOT EXISTS idx_chat_group ON chat_messages(group_id, created_at)");
+
+    // General performance indexes
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_users_live_status ON users(live_status)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_tasks_created_by ON tasks(created_by)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_tasks_archived ON tasks(archived)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_task_assignees_task ON task_assignees(task_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_task_assignees_user ON task_assignees(user_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_task_history_task ON task_history(task_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id, action, entity_type, entity_id, created_at)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_leave_applications_user ON leave_applications(user_id, status, start_date, end_date)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_time_entries_task ON time_entries(task_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_approvals_task ON approvals(task_id)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_priority_tasks_status ON priority_tasks(status)");
+    handle.exec("CREATE INDEX IF NOT EXISTS idx_priority_tasks_assignee ON priority_tasks(assignee_user_id)");
   }
 
   handle.exec(`

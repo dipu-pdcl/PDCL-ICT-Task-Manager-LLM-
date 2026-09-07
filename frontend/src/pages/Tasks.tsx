@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, List, Kanban, CalendarDays, Rows3, Plus, ListTodo, UserPlus, FolderKanban } from 'lucide-react';
 import { api } from '../lib/api';
@@ -7,14 +7,15 @@ import { useAuth } from '../lib/auth';
 import { FilterBar } from '../components/FilterBar';
 import { defaultFilters, filterToParams } from '../lib/filters';
 import type { FilterState } from '../lib/filters';
-import { ListView } from '../components/views/ListView';
-import { GridView } from '../components/views/GridView';
-import { KanbanView } from '../components/views/KanbanView';
-import { CalendarView } from '../components/views/CalendarView';
-import { TimelineView } from '../components/views/TimelineView';
-import TaskForm from '../components/TaskForm';
 import { EmptyState, Skeleton, useToast } from '../components/ui';
 import { cx } from '../lib/utils';
+
+const ListView = React.lazy(() => import('../components/views/ListView').then(m => ({ default: m.ListView })));
+const GridView = React.lazy(() => import('../components/views/GridView').then(m => ({ default: m.GridView })));
+const KanbanView = React.lazy(() => import('../components/views/KanbanView').then(m => ({ default: m.KanbanView })));
+const CalendarView = React.lazy(() => import('../components/views/CalendarView').then(m => ({ default: m.CalendarView })));
+const TimelineView = React.lazy(() => import('../components/views/TimelineView').then(m => ({ default: m.TimelineView })));
+const TaskForm = React.lazy(() => import('../components/TaskForm').then(m => ({ default: m.default })));
 
 const VIEWS = [
   { key: 'list', label: 'List', icon: List },
@@ -109,21 +110,23 @@ export default function Tasks() {
         <EmptyState icon={<ListTodo size={26} />} title="No tasks match your filters"
           subtitle="Try adjusting the filters or create a new task." action={<button className="btn btn-primary" onClick={() => setFormOpen(true)}><Plus size={16} /> Create Task</button>} />
       ) : (
-        <>
+        <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5"><Skeleton className="h-36" /></div>}>
           {view === 'list' && <ListView tasks={tasks} />}
           {view === 'grid' && <GridView tasks={tasks} />}
           {view === 'kanban' && <KanbanView tasks={tasks} onMoved={() => load(filters)} />}
           {view === 'calendar' && <CalendarView tasks={tasks} />}
           {view === 'timeline' && <TimelineView tasks={tasks} />}
-        </>
+        </Suspense>
       )}
 
-      <TaskForm open={newTask} onClose={() => { setFormOpen(false); setParams({}, { replace: true }); }}
-        task={null} onSaved={(t) => { load(filters); navigate(`/tasks/${t.id}`); }} />
-      {!isAdmin && (
-        <TaskForm open={selfFormOpen} onClose={() => { setSelfFormOpen(false); setParams({}, { replace: true }); }}
-          task={null} selfTask onSaved={(t) => { load(filters); navigate(`/tasks/${t.id}`); }} />
-      )}
+      <Suspense fallback={null}>
+        <TaskForm open={newTask} onClose={() => { setFormOpen(false); setParams({}, { replace: true }); }}
+          task={null} onSaved={(t) => { load(filters); navigate(`/tasks/${t.id}`); }} />
+        {!isAdmin && (
+          <TaskForm open={selfFormOpen} onClose={() => { setSelfFormOpen(false); setParams({}, { replace: true }); }}
+            task={null} selfTask onSaved={(t) => { load(filters); navigate(`/tasks/${t.id}`); }} />
+        )}
+      </Suspense>
     </div>
   );
 }

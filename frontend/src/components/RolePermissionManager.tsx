@@ -16,13 +16,11 @@ import {
   Square,
   HelpCircle,
   RotateCcw,
-  Palette,
   Save,
   Tag,
   Search,
   Layers,
   ArrowRight,
-  ExternalLink,
   Award
 } from 'lucide-react';
 import { api } from '../lib/api';

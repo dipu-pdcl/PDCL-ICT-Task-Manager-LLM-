@@ -27,8 +27,7 @@ import {
   Activity,
   History,
   RotateCcw,
-  Sliders,
-  Award
+  Sliders
 } from 'lucide-react';
 import { api, downloadExport } from '../lib/api';
 import type { Settings } from '../lib/types';

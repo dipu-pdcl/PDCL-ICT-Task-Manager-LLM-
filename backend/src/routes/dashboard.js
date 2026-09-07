@@ -51,30 +51,43 @@ router.get('/', (req, res) => {
 
   const num = (sql) => db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND ${sql}`).get(...P()).c;
 
-  const daily = series(14).map((d) => {
-    const added = db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND date(t.created_at) = ?`).get(...P(), d.date).c;
-    const done = db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND date(t.completed_at) = ?`).get(...P(), d.date).c;
-    return { ...d, added, done };
-  });
+  const todayStr = today();
 
-  const monthly = series(12, 'month').map((m) => {
-    const added = db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND strftime('%Y-%m', t.created_at) = ?`).get(...P(), m.date.slice(0, 7)).c;
-    const done = db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND strftime('%Y-%m', t.completed_at) = ?`).get(...P(), m.date.slice(0, 7)).c;
-    return { ...m, added, done };
-  });
+  const dailyMap = new Map();
+  series(14).forEach((d) => dailyMap.set(d.date, { ...d, added: 0, done: 0 }));
+  db.prepare(`
+    SELECT date(t.created_at) AS d, COUNT(*) AS c FROM tasks t WHERE ${scope} AND t.created_at >= date('${todayStr}', '-13 day') GROUP BY d
+  `).all(...P()).forEach((r) => { if (dailyMap.has(r.d)) dailyMap.get(r.d).added = r.c; });
+  db.prepare(`
+    SELECT date(t.completed_at) AS d, COUNT(*) AS c FROM tasks t WHERE ${scope} AND t.completed_at >= date('${todayStr}', '-13 day') AND t.completed_at IS NOT NULL GROUP BY d
+  `).all(...P()).forEach((r) => { if (dailyMap.has(r.d)) dailyMap.get(r.d).done = r.c; });
+  const daily = Array.from(dailyMap.values());
 
-  const completionTrend = series(14).map((d) => {
-    const c = db.prepare(`SELECT COUNT(*) c FROM tasks t WHERE ${scope} AND date(t.completed_at) = ?`).get(...P(), d.date).c;
-    return { ...d, completed: c };
-  });
+  const monthlyMap = new Map();
+  series(12, 'month').forEach((m) => monthlyMap.set(m.date.slice(0, 7), { ...m, added: 0, done: 0 }));
+  db.prepare(`
+    SELECT strftime('%Y-%m', t.created_at) AS m, COUNT(*) AS c FROM tasks t WHERE ${scope} AND t.created_at >= date('${todayStr}', '-12 month') GROUP BY m
+  `).all(...P()).forEach((r) => { if (monthlyMap.has(r.m)) monthlyMap.get(r.m).added = r.c; });
+  db.prepare(`
+    SELECT strftime('%Y-%m', t.completed_at) AS m, COUNT(*) AS c FROM tasks t WHERE ${scope} AND t.completed_at >= date('${todayStr}', '-12 month') AND t.completed_at IS NOT NULL GROUP BY m
+  `).all(...P()).forEach((r) => { if (monthlyMap.has(r.m)) monthlyMap.get(r.m).done = r.c; });
+  const monthly = Array.from(monthlyMap.values());
 
-  const overdueTrend = series(14).map((d) => {
-    const c = db.prepare(`
-      SELECT COUNT(*) c FROM tasks t WHERE ${scope}
-      AND t.due_date IS NOT NULL AND t.due_date <= ? AND t.due_date >= ?
-      AND t.status NOT IN ('done','cancelled')`).get(...P(), d.date, dateDaysAgo(13)).c;
-    return { ...d, overdue: c };
-  });
+  const completionMap = new Map();
+  series(14).forEach((d) => completionMap.set(d.date, { ...d, completed: 0 }));
+  db.prepare(`
+    SELECT date(t.completed_at) AS d, COUNT(*) AS c FROM tasks t WHERE ${scope} AND t.completed_at >= date('${todayStr}', '-13 day') AND t.completed_at IS NOT NULL GROUP BY d
+  `).all(...P()).forEach((r) => { if (completionMap.has(r.d)) completionMap.get(r.d).completed = r.c; });
+  const completionTrend = Array.from(completionMap.values());
+
+  const overdueMap = new Map();
+  series(14).forEach((d) => overdueMap.set(d.date, { ...d, overdue: 0 }));
+  db.prepare(`
+    SELECT date(t.due_date) AS d, COUNT(*) AS c FROM tasks t WHERE ${scope}
+    AND t.due_date IS NOT NULL AND t.due_date <= date('${todayStr}') AND t.due_date >= date('${todayStr}', '-13 day')
+    AND t.status NOT IN ('done','cancelled') GROUP BY d
+  `).all(...P()).forEach((r) => { if (overdueMap.has(r.d)) overdueMap.get(r.d).overdue = r.c; });
+  const overdueTrend = Array.from(overdueMap.values());
 
   const teamPerf = db.prepare(`
     SELECT te.name AS name, te.id, COUNT(t.id) AS total,
@@ -117,30 +130,49 @@ router.get('/', (req, res) => {
     SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 6
   `).all(uid);
 
+  const summaryRow = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) AS open,
+      SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done,
+      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+      SUM(CASE WHEN due_date IS NOT NULL AND due_date < '${todayStr}' AND status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) AS overdue,
+      SUM(CASE WHEN status IN ('todo','discussion') THEN 1 ELSE 0 END) AS pending,
+      SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS inProgress,
+      SUM(CASE WHEN status = 'in_review' THEN 1 ELSE 0 END) AS inReview,
+      SUM(CASE WHEN due_date = '${todayStr}' AND status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) AS dueToday,
+      SUM(CASE WHEN due_date >= '${todayStr}' AND due_date <= date('${todayStr}', '+7 day') AND status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) AS dueWeek,
+      SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) AS blocked,
+      SUM(CASE WHEN priority = 'critical' AND status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) AS critical,
+      SUM(CASE WHEN status='done' AND date(completed_at) = '${todayStr}' THEN 1 ELSE 0 END) AS doneToday,
+      COALESCE(SUM(budget),0) AS budget,
+      COALESCE(SUM(estimated_hours),0) AS hours
+    FROM tasks t WHERE ${scope}
+  `).get(...P());
+
   const summary = {
-    total: num('1=1'),
-    open: num(`status NOT IN ('done','cancelled')`),
-    done: num(`status = 'done'`),
-    cancelled: num(`status = 'cancelled'`),
-    overdue: num(`due_date IS NOT NULL AND due_date < '${today()}' AND status NOT IN ('done','cancelled')`),
-    pending: num(`status IN ('todo','discussion')`),
-    inProgress: num(`status = 'in_progress'`),
-    inReview: num(`status = 'in_review'`),
-    dueToday: num(`due_date = '${today()}' AND status NOT IN ('done','cancelled')`),
-    dueWeek: num(`due_date >= '${today()}' AND due_date <= date('${today()}', '+7 day') AND status NOT IN ('done','cancelled')`),
-    blocked: num(`is_blocked = 1`),
-    critical: num(`priority = 'critical' AND status NOT IN ('done','cancelled')`),
-    doneToday: num(`status='done' AND date(completed_at) = '${today()}'`),
+    total: summaryRow?.total || 0,
+    open: summaryRow?.open || 0,
+    done: summaryRow?.done || 0,
+    cancelled: summaryRow?.cancelled || 0,
+    overdue: summaryRow?.overdue || 0,
+    pending: summaryRow?.pending || 0,
+    inProgress: summaryRow?.inProgress || 0,
+    inReview: summaryRow?.inReview || 0,
+    dueToday: summaryRow?.dueToday || 0,
+    dueWeek: summaryRow?.dueWeek || 0,
+    blocked: summaryRow?.blocked || 0,
+    critical: summaryRow?.critical || 0,
+    doneToday: summaryRow?.doneToday || 0,
     activeUsers: admin ? db.prepare(`SELECT COUNT(*) c FROM users WHERE is_active=1`).get().c
       : db.prepare(`SELECT COUNT(DISTINCT user_id) c FROM task_assignees ta JOIN tasks t ON t.id=ta.task_id WHERE t.status NOT IN ('done','cancelled')`).get().c,
+    budgetUtil: { budget: Number(summaryRow?.budget || 0), hours: Number(summaryRow?.hours || 0) },
   };
   summary.completionRate = summary.total ? Math.round((summary.done / summary.total) * 100) : 0;
   const avgH = db.prepare(`
     SELECT ROUND(AVG((julianday(completed_at) - julianday(created_at)) * 24),1) v
     FROM tasks t WHERE status='done' AND completed_at IS NOT NULL AND ${scope}`).get(...P()).v;
   summary.avgCompletionHours = avgH || 0;
-  const budget = db.prepare(`SELECT COALESCE(SUM(t.budget),0) total, COALESCE(SUM(t.estimated_hours),0) hours FROM tasks t WHERE ${scope}`).get(...P());
-  summary.budgetUtil = { budget: budget.total, hours: budget.hours };
 
   const r = dateRangeFromKey(req.query.dateKey || '30d', req.query.dateKey === 'custom' ? { from: req.query.date_from || req.query.from, to: req.query.date_to || req.query.to } : null);
   let kpi = null;

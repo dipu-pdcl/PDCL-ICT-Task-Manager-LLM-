@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Flame, Upload, Download, Plus, Search, Filter, Trash2, Edit3, CheckCircle2,
+  Flame, Upload, Download, Plus, Search, Trash2, Edit3, CheckCircle2,
   Clock, AlertCircle, RefreshCw, FileSpreadsheet, Check, X, User,
-  ChevronDown, Calendar, Eye, Layers, Shield, FileText, Sparkles, ArrowUpDown,
-  MessageSquare, MessageSquarePlus, Save, Send, DatabaseBackup, CheckSquare, Square,
-  ExternalLink, ArrowRight
+  ChevronDown, Calendar, Eye, Layers, FileText, Sparkles, ArrowUpDown,
+  MessageSquare, MessageSquarePlus, Save, Send, DatabaseBackup
 } from 'lucide-react';
 import { api, downloadExport } from '../lib/api';
 import { useAuth } from '../lib/auth';

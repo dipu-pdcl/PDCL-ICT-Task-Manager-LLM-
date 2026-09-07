@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ListTodo, CircleDashed, Target, CheckCircle2, CalendarClock, Clock3, Timer,
-  CalendarDays, CalendarRange, AlertOctagon, Flame, Activity, Trophy, MessageSquare,
-  Bell, ChevronRight, TrendingUp, Sparkles, Gauge,
+  CalendarDays, AlertOctagon, Activity, Trophy, TrendingUp, Gauge,
+  Sparkles, ChevronRight
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';

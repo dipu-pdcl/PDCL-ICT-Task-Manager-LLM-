@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Paperclip, MessageSquare, ListChecks, Flag, Clock } from 'lucide-react';
+import { CalendarDays, Paperclip, MessageSquare, ListChecks, Flag } from 'lucide-react';
 import type { Task } from '../lib/types';
 import { useSettings } from '../lib/settings';
 import { statusById, priorityById, difficultyById, fmtDate, isOverdue, cx } from '../lib/utils';

@@ -9,4 +9,15 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ['recharts'],
+          excel: ['exceljs'],
+        },
+      },
+    },
+  },
 });

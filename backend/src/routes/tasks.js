@@ -35,11 +35,11 @@ function fetchAssignees(taskId) {
   `).all(taskId);
 }
 
-function taskJson(t, withAssignees = true) {
-  const assignees = withAssignees ? fetchAssignees(t.id) : [];
-  const commentsCount = db.prepare('SELECT COUNT(*) AS c FROM task_comments WHERE task_id = ?').get(t.id).c;
-  const checkCount = db.prepare('SELECT COUNT(*) AS c, COALESCE(SUM(done),0) AS d FROM task_checklist WHERE task_id = ?').get(t.id);
-  const attCount = db.prepare('SELECT COUNT(*) AS c FROM task_attachments WHERE task_id = ?').get(t.id).c;
+function taskJson(t, withAssignees = true, counts = {}, assigneesMap = {}) {
+  const assignees = withAssignees ? (assigneesMap[t.id] || []) : [];
+  const commentsCount = counts.comments?.[t.id] || 0;
+  const checkCount = counts.checklist?.[t.id] || { c: 0, d: 0 };
+  const attCount = counts.attachments?.[t.id] || 0;
   return {
     ...t,
     flags: safeParse(t.flags, []),
@@ -177,7 +177,33 @@ router.get('/', (req, res) => {
   const flags = Array.isArray(q.flag) ? q.flag : q.flag ? [q.flag] : [];
   const tags = Array.isArray(q.tag) ? q.tag : q.tag ? [q.tag] : [];
 
-  let result = rows.map((t) => taskJson(t));
+  const ids = rows.map((r) => r.id);
+  const counts = {
+    comments: {},
+    checklist: {},
+    attachments: {},
+  };
+  const assigneesMap = {};
+
+  if (ids.length) {
+    const inIds = ids.map(() => '?').join(',');
+    const comments = db.prepare(`SELECT task_id, COUNT(*) AS c FROM task_comments WHERE task_id IN (${inIds}) GROUP BY task_id`).all(...ids);
+    comments.forEach((c) => { counts.comments[c.task_id] = c.c; });
+
+    const checklist = db.prepare(`SELECT task_id, COUNT(*) AS c, COALESCE(SUM(done),0) AS d FROM task_checklist WHERE task_id IN (${inIds}) GROUP BY task_id`).all(...ids);
+    checklist.forEach((c) => { counts.checklist[c.task_id] = { c: c.c, d: c.d }; });
+
+    const attachments = db.prepare(`SELECT task_id, COUNT(*) AS c FROM task_attachments WHERE task_id IN (${inIds}) GROUP BY task_id`).all(...ids);
+    attachments.forEach((a) => { counts.attachments[a.task_id] = a.c; });
+
+    const assignees = db.prepare(`SELECT ta.*, u.name AS user_name, u.avatar, u.team_id FROM task_assignees ta JOIN users u ON u.id = ta.user_id WHERE ta.task_id IN (${inIds}) ORDER BY ta.assigned_at`).all(...ids);
+    assignees.forEach((a) => {
+      if (!assigneesMap[a.task_id]) assigneesMap[a.task_id] = [];
+      assigneesMap[a.task_id].push(a);
+    });
+  }
+
+  let result = rows.map((t) => taskJson(t, true, counts, assigneesMap));
   if (flags.length) {
     result = result.filter((t) => t.flags.some((f) => flags.includes(f)));
   }

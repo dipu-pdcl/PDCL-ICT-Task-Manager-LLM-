@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserCircle, KeyRound, Upload, Mail, Building2, Users, Award, Shield, Eye, EyeOff, Radio, MessageSquare } from 'lucide-react';
+import { UserCircle, KeyRound, Upload, Mail, Building2, Users, Award, Shield, Eye, EyeOff, Radio } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useToast, Avatar, Badge, Skeleton } from '../components/ui';

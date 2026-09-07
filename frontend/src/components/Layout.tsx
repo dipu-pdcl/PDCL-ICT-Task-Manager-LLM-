@@ -157,11 +157,11 @@ export function Layout() {
       } catch {}
     }
 
-    // Periodic backup poll every 30s
+    // Periodic backup poll every 60s
     const iv = setInterval(() => {
       loadNotifs();
       loadChatUnread();
-    }, 30000);
+    }, 60000);
 
     return () => {
       clearInterval(iv);

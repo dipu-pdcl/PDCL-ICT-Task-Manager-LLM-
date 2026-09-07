@@ -3,7 +3,7 @@ import {
   Plus, Pencil, KeyRound, Power, Search, Trash2, UserCog, Eye, EyeOff,
   Copy, Check, Shield, RefreshCw, Mail, Phone, Building2, Users as UsersIcon,
   Download, CheckSquare, Clock, Filter, X, ChevronRight, Activity, Calendar,
-  Briefcase, UserCheck, AlertCircle, FileText, Lock
+  Lock
 } from 'lucide-react';
 import { api } from '../lib/api';
 import type { User, LiveStatusType, RoleGroup, Role } from '../lib/types';
