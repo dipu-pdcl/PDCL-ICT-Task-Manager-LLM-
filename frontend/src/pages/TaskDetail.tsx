@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Pencil, Trash2, Paperclip, MessageSquare, ListChecks, History, Users,
   CalendarDays, Flag, Tag, Link2, Clock, CheckCircle2, Send, Plus, X, ShieldCheck, Upload, Download, FileText,
+  UserPlus, UserMinus, ArrowRightLeft, Search,
 } from 'lucide-react';
 import { api, downloadExport } from '../lib/api';
 import type { Task as TaskType, TaskDetail, Comment } from '../lib/types';
@@ -35,6 +36,11 @@ export default function TaskDetail() {
   const [uploading, setUploading] = useState(false);
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [progressDraft, setProgressDraft] = useState<Record<number, number>>({});
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [addAssigneeOpen, setAddAssigneeOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [transferIds, setTransferIds] = useState<number[]>([]);
+  const [addIds, setAddIds] = useState<number[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -109,6 +115,30 @@ export default function TaskDetail() {
       setProgressDraft((d) => { const { [uid]: _, ...rest } = d; return rest; });
       load();
     } catch (e: any) { toast(e.message, 'error'); }
+  };
+
+  const canManageAssignees = isAdmin || task.created_by === user?.id || (task.assignees || []).some((a) => a.user_id === user?.id);
+
+  const handleTransfer = async (selectedUserIds: number[]) => {
+    if (!selectedUserIds.length) return;
+    try {
+      await api.post(`/tasks/${task.id}/assignees/transfer`, { user_ids: selectedUserIds });
+      toast('Task transferred');
+      setTransferOpen(false);
+      setSearchQuery('');
+      load();
+    } catch (e: any) { toast(e.message || 'Transfer failed', 'error'); }
+  };
+
+  const handleAddAssignees = async (selectedUserIds: number[]) => {
+    if (!selectedUserIds.length) return;
+    try {
+      await api.post(`/tasks/${task.id}/assignees/add`, { user_ids: selectedUserIds });
+      toast('Assignees added');
+      setAddAssigneeOpen(false);
+      setSearchQuery('');
+      load();
+    } catch (e: any) { toast(e.message || 'Failed to add assignees', 'error'); }
   };
 
   const deleteAttachment = async (aid: number) => {
@@ -237,7 +267,15 @@ export default function TaskDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
           <div className="card p-4">
-            <h3 className="font-bold mb-3 flex items-center gap-2"><Users size={16} className="text-brand" /> Assignees ({task.assignees?.length})</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold flex items-center gap-2"><Users size={16} className="text-brand" /> Assignees ({task.assignees?.length})</h3>
+              {canManageAssignees && (
+                <div className="flex gap-2">
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setSearchQuery(''); setTransferOpen(true); }}><ArrowRightLeft size={14} /> Transfer</button>
+                  <button className="btn btn-primary btn-sm" onClick={() => { setSearchQuery(''); setAddAssigneeOpen(true); }}><UserPlus size={14} /> Add Assignee</button>
+                </div>
+              )}
+            </div>
             <div className="space-y-3">
               {(task.assignees || []).map((a) => (
                 <div key={a.user_id} className="flex items-center gap-3 p-2.5 rounded-xl bg-card2/60">
@@ -479,6 +517,72 @@ export default function TaskDetail() {
           </div>
         </div>
       </Modal>
+
+      <Modal open={transferOpen} onClose={() => setTransferOpen(false)} title="Transfer Task"
+        footer={
+          <><button className="btn btn-ghost" onClick={() => setTransferOpen(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => handleTransfer(transferIds)} disabled={!transferIds.length}>Transfer</button></>
+        }>
+        <div className="space-y-3">
+          <p className="text-sm text-ink2">This will remove current assignees and assign this task to the selected user(s).</p>
+          <TransferUserSelect users={users} selectedIds={transferIds} onChange={setTransferIds} currentAssignees={(task.assignees || []).map((a) => a.user_id)} />
+        </div>
+      </Modal>
+
+      <Modal open={addAssigneeOpen} onClose={() => setAddAssigneeOpen(false)} title="Add Assignee"
+        footer={
+          <><button className="btn btn-ghost" onClick={() => setAddAssigneeOpen(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => handleAddAssignees(addIds)} disabled={!addIds.length}>Add Assignee(s)</button></>
+        }>
+        <div className="space-y-3">
+          <p className="text-sm text-ink2">Add one or more users to this task without changing existing assignees.</p>
+          <TransferUserSelect users={users} selectedIds={addIds} onChange={setAddIds} currentAssignees={(task.assignees || []).map((a) => a.user_id)} />
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function TransferUserSelect({ users, selectedIds, onChange, currentAssignees = [] }: {
+  users: { id: number; name: string }[];
+  selectedIds: number[];
+  onChange: (ids: number[]) => void;
+  currentAssignees?: number[];
+}) {
+  const [q, setQ] = useState('');
+  const filtered = users.filter((u) => {
+    if (currentAssignees.includes(u.id) && !selectedIds.includes(u.id)) return false;
+    return u.name.toLowerCase().includes(q.toLowerCase());
+  });
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink3" />
+        <input className="input !pl-9" placeholder="Search users..." value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      <div className="max-h-60 overflow-y-auto space-y-1">
+        {filtered.length === 0 && <p className="text-sm text-ink3 text-center py-4">No users found</p>}
+        {filtered.map((u) => {
+          const checked = selectedIds.includes(u.id);
+          return (
+            <label key={u.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-card2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => {
+                  onChange(checked ? selectedIds.filter((x) => x !== u.id) : [...selectedIds, u.id]);
+                }}
+                className="w-4 h-4 accent-indigo-500"
+              />
+              <span className="text-sm font-medium">{u.name}</span>
+            </label>
+          );
+        })}
+      </div>
+      {selectedIds.length > 0 && (
+        <div className="text-xs text-ink3">{selectedIds.length} user{selectedIds.length > 1 ? 's' : ''} selected</div>
+      )}
     </div>
   );
 }

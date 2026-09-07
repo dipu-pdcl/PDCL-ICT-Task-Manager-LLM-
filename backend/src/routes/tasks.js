@@ -397,6 +397,57 @@ router.delete('/:id/assignees/:userId', loadTask, (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/:id/assignees/add', loadTask, (req, res) => {
+  const id = Number(req.params.id);
+  const { user_ids } = req.body || {};
+  const ids = Array.isArray(user_ids) ? [...new Set(user_ids.map(Number).filter((n) => Number.isFinite(n) && n > 0))] : [];
+  if (!ids.length) return res.status(400).json({ error: 'user_ids array required' });
+
+  const isAssignee = (req.taskAssignees || []).some((a) => a.user_id === req.user.id);
+  if (!isAssignee && !isAdmin(req.user) && req.task.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only assigned users or admins can add assignees' });
+  }
+
+  const current = db.prepare('SELECT user_id FROM task_assignees WHERE task_id = ?').all(id).map((x) => x.user_id);
+  const added = [];
+  const add = db.prepare('INSERT OR IGNORE INTO task_assignees (task_id, user_id) VALUES (?, ?)');
+  for (const uid of ids) {
+    if (current.includes(uid)) continue;
+    add.run(id, uid);
+    added.push(uid);
+    const u = db.prepare('SELECT name FROM users WHERE id = ?').get(uid);
+    notify(uid, 'task', 'Task assigned to you', req.task.title, `/tasks/${id}`);
+    logHistory(id, req.user.id, 'assignee.add', 'assignee', '', u?.name || String(uid));
+  }
+  audit(req, 'task.assignee_add', 'task', id, `Added assignees: ${added.join(',')}`);
+  res.json({ ok: true, added });
+});
+
+router.post('/:id/assignees/transfer', loadTask, (req, res) => {
+  const id = Number(req.params.id);
+  const { user_ids } = req.body || {};
+  const ids = Array.isArray(user_ids) ? [...new Set(user_ids.map(Number).filter((n) => Number.isFinite(n) && n > 0))] : [];
+  if (!ids.length) return res.status(400).json({ error: 'user_ids array required' });
+
+  const isAssignee = (req.taskAssignees || []).some((a) => a.user_id === req.user.id);
+  if (!isAssignee && !isAdmin(req.user) && req.task.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only assigned users or admins can transfer this task' });
+  }
+
+  const current = db.prepare('SELECT user_id FROM task_assignees WHERE task_id = ?').all(id).map((x) => x.user_id);
+  const removed = [...current];
+  db.prepare('DELETE FROM task_assignees WHERE task_id = ?').run(id);
+  const add = db.prepare('INSERT INTO task_assignees (task_id, user_id) VALUES (?, ?)');
+  for (const uid of ids) {
+    add.run(id, uid);
+    const u = db.prepare('SELECT name FROM users WHERE id = ?').get(uid);
+    notify(uid, 'task', 'Task transferred to you', req.task.title, `/tasks/${id}`);
+    logHistory(id, req.user.id, 'assignee.transfer', 'assignee', removed.join(','), u?.name || String(uid));
+  }
+  audit(req, 'task.assignee_transfer', 'task', id, `Transferred to ${ids.join(',')}`);
+  res.json({ ok: true, transferred: ids, removed });
+});
+
 router.put('/:id/assignees/:userId/progress', loadTask, (req, res) => {
   const id = Number(req.params.id);
   const userId = Number(req.params.userId);
