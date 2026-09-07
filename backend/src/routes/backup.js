@@ -490,6 +490,18 @@ router.post('/backup/restore', upload.single('file'), async (req, res) => {
       replaceDatabase(dbBuf);
     }
 
+    // 2a. Always fix sqlite_sequence after restore so task/user/etc IDs never jump or append extra digits
+    try {
+      db.exec('DELETE FROM sqlite_sequence;');
+      const seqStmt = db.prepare('INSERT INTO sqlite_sequence (name, seq) VALUES (?, ?)');
+      const autoTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND sql LIKE '%AUTOINCREMENT%'").all();
+      for (const t of autoTables) {
+        const maxRow = db.prepare(`SELECT MAX(id) AS mx FROM "${t.name.replace(/"/g, '""')}"`).get();
+        const mx = Number(maxRow?.mx || 0);
+        seqStmt.run(t.name, mx + 1);
+      }
+    } catch { /* noop */ }
+
     // 3. Reset all system settings cache
     resetSettingsCache();
 

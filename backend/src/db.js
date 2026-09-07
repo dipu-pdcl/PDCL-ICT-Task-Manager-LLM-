@@ -517,18 +517,17 @@ export function restoreTablesFromData(tablesData, handle = db) {
       }
     }
 
-    // 4. Restore sqlite_sequence if provided to preserve auto-increment pointers
-    if (tablesData.sqlite_sequence && Array.isArray(tablesData.sqlite_sequence)) {
-      try {
-        handle.exec('DELETE FROM sqlite_sequence;');
-        const seqStmt = handle.prepare('INSERT INTO sqlite_sequence (name, seq) VALUES (?, ?)');
-        for (const s of tablesData.sqlite_sequence) {
-          if (s && s.name && s.seq !== undefined) {
-            seqStmt.run(s.name, s.seq);
-          }
-        }
-      } catch { /* noop if sqlite_sequence not writable */ }
-    }
+    // 4. Recompute sqlite_sequence from restored data to avoid stale or wrong backup seq values
+    try {
+      handle.exec('DELETE FROM sqlite_sequence;');
+      const seqStmt = handle.prepare('INSERT INTO sqlite_sequence (name, seq) VALUES (?, ?)');
+      const autoTables = handle.prepare("SELECT name FROM sqlite_master WHERE type='table' AND sql LIKE '%AUTOINCREMENT%'").all();
+      for (const t of autoTables) {
+        const maxRow = handle.prepare(`SELECT MAX(id) AS mx FROM "${t.name.replace(/"/g, '""')}"`).get();
+        const mx = Number(maxRow?.mx || 0);
+        seqStmt.run(t.name, mx + 1);
+      }
+    } catch { /* noop if sqlite_sequence not writable */ }
 
     handle.exec('COMMIT;');
   } catch (err) {
