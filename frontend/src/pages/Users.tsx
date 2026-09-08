@@ -10,7 +10,6 @@ import type { User, LiveStatusType, RoleGroup, Role } from '../lib/types';
 import { useAuth } from '../lib/auth';
 import { Avatar, Badge, Modal, ConfirmModal, useToast, EmptyState, Skeleton } from '../components/ui';
 import { LiveStatusDot, LiveStatusBadge } from '../components/LiveStatusIndicator';
-import { HotlineBadge } from '../components/HotlineBadge';
 import {
   cx,
   parseWeekendDays,
@@ -1204,14 +1203,6 @@ export default function Users() {
                     <span className="flex items-center gap-1.5 text-brand">
                       <Building2 size={12} className="shrink-0" />
                       <span>{dossierUser.department_name}</span>
-                      {dossierUser.department_hotline && (
-                        <HotlineBadge
-                          hotline={dossierUser.department_hotline}
-                          branchName={dossierUser.department_name}
-                          variant="chip"
-                          showCopy={true}
-                        />
-                      )}
                     </span>
                   )}
                   {dossierUser.team_name && (
