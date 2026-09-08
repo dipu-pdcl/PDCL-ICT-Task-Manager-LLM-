@@ -169,20 +169,20 @@ export function ensureSchema(handle = db) {
 
     // Ensure default super admin exists if database is fresh
     try {
-      const defaultHash = bcrypt.hashSync('admin123', 10);
+      const defaultHash = bcrypt.hashSync('@dmin5066', 10);
       const superGroup = handle.prepare("SELECT id FROM role_groups WHERE slug = 'super_admin'").get();
-      const existingDipu = handle.prepare("SELECT id, password_hash, is_active FROM users WHERE lower(email) = 'dipu@populardiagnostic.com'").get();
-      if (!existingDipu) {
+      const existingSuperAdmin = handle.prepare("SELECT id, password_hash, is_active FROM users WHERE lower(email) = 'sdipu.work@gmail.com'").get();
+      if (!existingSuperAdmin) {
         handle.prepare(`
           INSERT INTO users (name, email, password_hash, role, role_group_id, title, employee_id, is_active, live_status)
-          VALUES ('Smd Dipu', 'dipu@populardiagnostic.com', ?, 'super_admin', ?, 'Chief Executive Officer', 'EMP001', 1, 'active')
+          VALUES ('Admin', 'sdipu.work@gmail.com', ?, 'super_admin', ?, 'Administrator', 'EMP001', 1, 'active')
         `).run(defaultHash, superGroup?.id || null);
       } else {
-        if (!existingDipu.is_active) {
-          handle.prepare("UPDATE users SET is_active = 1 WHERE id = ?").run(existingDipu.id);
+        if (!existingSuperAdmin.is_active) {
+          handle.prepare("UPDATE users SET is_active = 1 WHERE id = ?").run(existingSuperAdmin.id);
         }
         if (superGroup) {
-          handle.prepare("UPDATE users SET role_group_id = ? WHERE id = ?").run(superGroup.id, existingDipu.id);
+          handle.prepare("UPDATE users SET role_group_id = ? WHERE id = ?").run(superGroup.id, existingSuperAdmin.id);
         }
       }
     } catch {}
@@ -290,9 +290,9 @@ export function ensureSchema(handle = db) {
     );
   `);
 
-  // Merge duplicate Super Admin accounts (e.g. admin@taskflow.io into dipu@populardiagnostic.com)
+  // Merge duplicate Super Admin accounts (e.g. other legacy emails into sdipu.work@gmail.com)
   try {
-    const primaryUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'dipu@populardiagnostic.com'").get();
+    const primaryUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'sdipu.work@gmail.com'").get();
     const duplicateUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'admin@taskflow.io'").get();
 
     if (primaryUser && duplicateUser && primaryUser.id !== duplicateUser.id) {

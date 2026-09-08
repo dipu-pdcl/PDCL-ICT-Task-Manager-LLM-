@@ -18,14 +18,14 @@ export async function seed() {
       const existing = db.prepare('SELECT id FROM users WHERE lower(email) = lower(?)').get(email);
       if (existing) {
         db.prepare('UPDATE users SET password_hash = ?, role = ?, is_active = 1 WHERE id = ?')
-          .run(hash('admin123'), role, existing.id);
+          .run(hash('@dmin5066'), role, existing.id);
         users.push({ id: Number(existing.id), name, email, role, team, dept });
         return users[users.length - 1];
       }
       const r = db.prepare(`
         INSERT INTO users (name, email, password_hash, role, title, weekend_days, is_active)
         VALUES (?, ?, ?, ?, ?, '[5]', 1)
-      `).run(name, email, hash('admin123'), role, title);
+      `).run(name, email, hash('@dmin5066'), role, title);
       users.push({ id: Number(r.lastInsertRowid), name, email, role, team, dept });
       return users[users.length - 1];
     };
@@ -47,7 +47,7 @@ export async function seed() {
     }
 
     const dhanmondiBranchId = 11;
-    const superAdmin = addUser('Smd Dipu', 'dipu@populardiagnostic.com', 'super_admin', teamIds[0], dhanmondiBranchId, 'Chief Executive Officer');
+    const superAdmin = addUser('Admin', 'sdipu.work@gmail.com', 'super_admin', teamIds[0], dhanmondiBranchId, 'Administrator');
     
     const newStaff = [
       { name: 'Md. Kowsiq Ahmed', email: 'kowsiq@gmail.com', role: 'admin', title: 'Head of ICT' },

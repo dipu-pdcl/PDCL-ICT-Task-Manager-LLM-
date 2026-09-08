@@ -110,12 +110,12 @@ export default function Users() {
         api.get<{ id: number; name: string }[]>('/departments'),
         api.get<RoleGroup[]>('/settings/role-groups').catch(() => []),
       ]);
-      // Exclude super admin (Smd Dipu) from User Management directory as requested
+      // Exclude super admin (Admin) from User Management directory as requested
       const staffList = (u || []).filter(
         (user) =>
           user.role !== 'super_admin' &&
           user.role_group_slug !== 'super_admin' &&
-          user.email !== 'dipu@populardiagnostic.com' &&
+          user.email !== 'sdipu.work@gmail.com' &&
           !user.name.toLowerCase().includes('smd dipu')
       );
       setUsers(staffList);
