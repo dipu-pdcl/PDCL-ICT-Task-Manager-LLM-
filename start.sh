@@ -167,10 +167,10 @@ fi
 echo
 echo "  ========================================================"
 echo "    TaskFlow is live at: http://localhost:$PORT"
-echo "    Default logins (all pass: admin123):"
+echo "    Default logins (all pass: 123456):"
 echo "      - dipu@populardiagnostic.com (Super Admin)"
 echo "      - kowsiq@gmail.com (Admin)"
-echo "      - mintu@gmail.com (Staff User)"
+echo "      - wattin@gmail.com (Staff User)"
 echo "  ========================================================"
 echo "  Press Ctrl+C to stop the server."
 echo
