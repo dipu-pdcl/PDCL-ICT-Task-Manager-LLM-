@@ -47,11 +47,11 @@ export async function seed() {
     }
 
     const dhanmondiBranchId = 11;
-    const superAdmin = addUser('Admin', 'sdipu.work@gmail.com', 'super_admin', teamIds[0], dhanmondiBranchId, 'Administrator');
-    
+    const superAdmin = addUser('Admin', 'dipu@populardiagnostic.com', 'super_admin', teamIds[0], dhanmondiBranchId, 'Administrator');
+
     const newStaff = [
       { name: 'Md. Kowsiq Ahmed', email: 'kowsiq@gmail.com', role: 'admin', title: 'Head of ICT' },
-      { name: 'Md. Sahidul Islam Mintu', email: 'mintu@gmail.com', role: 'user', title: 'Sr. IT Officer' },
+      { name: 'Md. Shahjahan Dipu', email: 'sdipu.work@gmail.com', role: 'admin', title: 'Sr. Engineer ICT' },
       { name: 'Md. Abdullah Al Mamun', email: 'mamun@gmail.com', role: 'sub_admin', title: 'Sr. Executive' },
       { name: 'Md. Kamal Uddin', email: 'kamal@gmail.com', role: 'admin', title: 'Sr. Executive' },
       { name: 'Md. Maruf Ahmed', email: 'maruf@gmail.com', role: 'admin', title: 'Sr. Executive' },

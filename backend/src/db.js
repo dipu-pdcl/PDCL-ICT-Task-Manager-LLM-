@@ -171,11 +171,11 @@ export function ensureSchema(handle = db) {
     try {
       const defaultHash = bcrypt.hashSync('@dmin5066', 10);
       const superGroup = handle.prepare("SELECT id FROM role_groups WHERE slug = 'super_admin'").get();
-      const existingSuperAdmin = handle.prepare("SELECT id, password_hash, is_active FROM users WHERE lower(email) = 'sdipu.work@gmail.com'").get();
+      const existingSuperAdmin = handle.prepare("SELECT id, password_hash, is_active FROM users WHERE lower(email) = 'dipu@populardiagnostic.com'").get();
       if (!existingSuperAdmin) {
         handle.prepare(`
           INSERT INTO users (name, email, password_hash, role, role_group_id, title, employee_id, is_active, live_status)
-          VALUES ('Admin', 'sdipu.work@gmail.com', ?, 'super_admin', ?, 'Administrator', 'EMP001', 1, 'active')
+          VALUES ('Admin', 'dipu@populardiagnostic.com', ?, 'super_admin', ?, 'Administrator', 'EMP001', 1, 'active')
         `).run(defaultHash, superGroup?.id || null);
       } else {
         if (!existingSuperAdmin.is_active) {
@@ -290,9 +290,9 @@ export function ensureSchema(handle = db) {
     );
   `);
 
-  // Merge duplicate Super Admin accounts (e.g. other legacy emails into sdipu.work@gmail.com)
+  // Merge duplicate Super Admin accounts (e.g. other legacy emails into dipu@populardiagnostic.com)
   try {
-    const primaryUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'sdipu.work@gmail.com'").get();
+    const primaryUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'dipu@populardiagnostic.com'").get();
     const duplicateUser = handle.prepare("SELECT id FROM users WHERE lower(email) = 'admin@taskflow.io'").get();
 
     if (primaryUser && duplicateUser && primaryUser.id !== duplicateUser.id) {

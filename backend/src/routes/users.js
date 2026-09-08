@@ -139,7 +139,7 @@ router.get('/', (req, res) => {
   }
 
   if (exclude_super === 'true' || exclude_super === '1') {
-     sql += ` AND u.role != 'super_admin' AND u.email != 'sdipu.work@gmail.com'`;
+     sql += ` AND u.role != 'super_admin' AND u.email != 'dipu@populardiagnostic.com'`;
   }
 
   sql += `
