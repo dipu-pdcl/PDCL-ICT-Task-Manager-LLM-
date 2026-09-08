@@ -51,7 +51,6 @@ export async function seed() {
 
     const newStaff = [
       { name: 'Md. Kowsiq Ahmed', email: 'kowsiq@gmail.com', role: 'admin', title: 'Head of ICT' },
-      { name: 'Md. Shahjahan Dipu', email: 'sdipu.work@gmail.com', role: 'admin', title: 'Sr. Engineer ICT' },
       { name: 'Md. Abdullah Al Mamun', email: 'mamun@gmail.com', role: 'sub_admin', title: 'Sr. Executive' },
       { name: 'Md. Kamal Uddin', email: 'kamal@gmail.com', role: 'admin', title: 'Sr. Executive' },
       { name: 'Md. Maruf Ahmed', email: 'maruf@gmail.com', role: 'admin', title: 'Sr. Executive' },
