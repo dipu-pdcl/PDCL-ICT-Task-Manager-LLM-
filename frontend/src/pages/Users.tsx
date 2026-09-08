@@ -770,15 +770,6 @@ export default function Users() {
                       <span className="chip !text-[11px] !py-0.5 inline-flex items-center gap-1" title={`Branch: ${u.department_name}`}>
                         <Building2 size={10} className="text-brand shrink-0" />
                         <span>{u.department_name}</span>
-                        {u.department_hotline && (
-                          <HotlineBadge
-                            hotline={u.department_hotline}
-                            branchName={u.department_name}
-                            variant="chip"
-                            showCopy={false}
-                            className="ml-0.5"
-                          />
-                        )}
                       </span>
                     )}
                     {u.team_name && (
